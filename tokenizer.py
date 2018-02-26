@@ -19,6 +19,7 @@ class SpacyTokenizer:
     Return list of tokens or lemmas, without sentencizing.
     Works only for English language.
     """
+
     def __init__(self, disable=None, stopwords=None):
         """
         :param disable: pipeline processors to omit; if nothing should be disabled,
@@ -32,7 +33,8 @@ class SpacyTokenizer:
         self.model.add_pipe(self.model.create_pipe('sentencizer'))
         self.tokenizer = English().Defaults.create_tokenizer(self.model)
 
-    def tokenize(self, data: List[str], ngram_range=(1, 1), batch_size=1000, n_threads=4):
+    def tokenize(self, data: List[str], ngram_range=(1, 1), batch_size=1000, n_threads=4,
+                 lower=True):
         """
         Tokenize a list of documents.
         :param data: a list of documents to process
@@ -42,13 +44,18 @@ class SpacyTokenizer:
         improves the spacy 'pipe' performance; shouldn't be too small
         :param n_threads: a number of threads for parallel computing; doesn't work good
          on a standard Python
+        :param lower: whether to perform lowercasing or not
         :return: a single processed doc generator
         """
         size = len(data)
+
         for i, doc in enumerate(
                 self.tokenizer.pipe(data, batch_size=batch_size, n_threads=n_threads)):
             logging.info("Process doc {} from {}".format(i, size))
-            tokens = [t.lower_ for t in doc]
+            if lower:
+                tokens = [t.lower_ for t in doc]
+            else:
+                tokens = [t.text for t in doc]
             processed_doc = self.ngramize(tokens, ngram_range=ngram_range)
             yield from processed_doc
 
@@ -91,15 +98,14 @@ class SpacyTokenizer:
 
         yield formatted_ngrams
 
-
 # Test
 # data = ['His paintings brought him both critical and commercial success,'
 #         ' which enabled. him to set up his own. professional portrait studio'
 #         ' in Chelsea, south-west London.', ' After the Great War finished, he met'
-#         ' and fell in love with Katherine Gardiner, she immediately became his muse and features'
-#         ' in many key work from the period. The couple married in 1921.']
+#                                            ' and fell in love with Katherine Gardiner, she immediately became his muse and features'
+#                                            ' in many key work from the period. The couple married in 1921.']
 # tok = SpacyTokenizer()
 # items = tok.lemmatize(data)
 # print(*list(i for i in items))
-# items = tok.tokenize(data)
+# items = tok.tokenize(data, lower=False)
 # print(*list(i for i in items))
