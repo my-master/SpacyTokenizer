@@ -35,7 +35,7 @@ class SpacyTokenizer:
         """
         Tokenize a list of documents.
         :param data: a list of documents to process
-        :param ngram_range: range for producing ngrams, ex. for onegrams + bigrams should be set to
+        :param ngram_range: range for producing ngrams, ex. for unigrams + bigrams should be set to
         (1, 2), for bigrams only should be set to (2, 2)
         :param batch_size: the number of documents to process at once;
         improves the spacy 'pipe' performance; shouldn't be too small
@@ -51,11 +51,11 @@ class SpacyTokenizer:
             processed_doc = self.ngramize(tokens, ngram_range=ngram_range)
             yield from processed_doc
 
-    def lemmatize(self, data: List[str], ngram_range=(1, 2), batch_size=1000, n_threads=4):
+    def lemmatize(self, data: List[str], ngram_range=(1, 1), batch_size=1000, n_threads=4):
         """
         Lemmatize a list of documents.
         :param data: a list of documents to process
-        :param ngram_range: range for producing ngrams, ex. for onegrams + bigrams should be set to
+        :param ngram_range: range for producing ngrams, ex. for unigrams + bigrams should be set to
         (1, 2), for bigrams only should be set to (2, 2)
         :param batch_size: the number of documents to process at once;
         improves the spacy 'pipe' performance; shouldn't be too small
