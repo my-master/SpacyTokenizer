@@ -28,6 +28,7 @@ class SpacyTokenizer:
             disable = ['parser', 'ner']
         self.stopwords = stopwords or []
         self.model = spacy.load('en', disable=disable)
+        self.model.add_pipe(self.model.create_pipe('sentencizer'))
         self.tokenizer = English().Defaults.create_tokenizer(self.model)
 
     def tokenize(self, data: List[str], ngram_range=(1, 1), batch_size=1000, n_threads=4):
@@ -64,8 +65,6 @@ class SpacyTokenizer:
         """
         size = len(data)
 
-        self.model.add_pipe(self.model.create_pipe('sentencizer'))
-
         for i, doc in enumerate(self.model.pipe(data, batch_size=batch_size, n_threads=n_threads)):
             logging.info("Process doc {} from {}".format(i, size))
             lemmas = chain.from_iterable([sent.lemma_.split() for sent in doc.sents])
@@ -87,13 +86,13 @@ class SpacyTokenizer:
 
 
 # Test
-# data = ['His paintings brought him both critical and commercial success,'
-#         ' which enabled him to set up his own professional portrait studio'
-#         ' in Chelsea, south-west London.', ' After the Great War finished, he met'
-#         ' and fell in love with Katherine Gardiner, she immediately became his muse and features'
-#         ' in many key work from the period. The couple married in 1921.']
-# tok = SpacyTokenizer()
-# items = tok.lemmatize(data)
-# print(*list(i for i in items))
-# items = tok.tokenize(data)
-# print(*list(i for i in items))
+data = ['His paintings brought him both critical and commercial success,'
+        ' which enabled. him to set up his own. professional portrait studio'
+        ' in Chelsea, south-west London.', ' After the Great War finished, he met'
+        ' and fell in love with Katherine Gardiner, she immediately became his muse and features'
+        ' in many key work from the period. The couple married in 1921.']
+tok = SpacyTokenizer()
+items = tok.lemmatize(data)
+print(*list(i for i in items))
+items = tok.tokenize(data)
+print(*list(i for i in items))
