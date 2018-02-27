@@ -20,7 +20,7 @@ class SpacyTokenizer:
     Works only for English language.
     """
 
-    def __init__(self, disable=None, stopwords=None):
+    def __init__(self, disable=None, stopwords=None, batch_size=None, ngram_range=None):
         """
         :param disable: pipeline processors to omit; if nothing should be disabled,
          pass an empty list
@@ -32,9 +32,11 @@ class SpacyTokenizer:
         self.model = spacy.load('en', disable=disable)
         self.model.add_pipe(self.model.create_pipe('sentencizer'))
         self.tokenizer = English().Defaults.create_tokenizer(self.model)
+        self.batch_size = batch_size
+        self.ngram_range = ngram_range
 
-    def tokenize(self, data: List[str], ngram_range=(1, 1), batch_size=1000, n_threads=4,
-                 lower=True) -> Generator[List[str], Any, None]:
+    def tokenize(self, data: List[str], ngram_range=(1, 1), batch_size=10000, n_threads=1,
+                 lower=True):
         """
         Tokenize a list of documents.
         :param data: a list of documents to process
@@ -49,9 +51,11 @@ class SpacyTokenizer:
         """
         size = len(data)
 
+        _batch_size = self.batch_size or batch_size
+
         for i, doc in enumerate(
-                self.tokenizer.pipe(data, batch_size=batch_size, n_threads=n_threads)):
-            logging.info("Process doc {} from {}".format(i, size))
+                self.tokenizer.pipe(data, batch_size=_batch_size, n_threads=n_threads)):
+            logger.info("Tokenize doc {} from {}".format(i, size))
             if lower:
                 tokens = [t.lower_ for t in doc]
             else:
@@ -59,8 +63,7 @@ class SpacyTokenizer:
             processed_doc = self.ngramize(tokens, ngram_range=ngram_range)
             yield from processed_doc
 
-    def lemmatize(self, data: List[str], ngram_range=(1, 1), batch_size=1000,
-                  n_threads=4) -> Generator[List[str], Any, None]:
+    def lemmatize(self, data: List[str], ngram_range=(1, 1), batch_size=10000, n_threads=1):
         """
         Lemmatize a list of documents.
         :param data: a list of documents to process
@@ -74,24 +77,29 @@ class SpacyTokenizer:
         """
         size = len(data)
 
-        for i, doc in enumerate(self.model.pipe(data, batch_size=batch_size, n_threads=n_threads)):
-            logging.info("Process doc {} from {}".format(i, size))
+        _batch_size = self.batch_size or batch_size
+        _ngram_range = self.ngram_range or ngram_range
+
+        for i, doc in enumerate(self.model.pipe(data, batch_size=_batch_size, n_threads=n_threads)):
+            logger.info("Lemmatize doc {} from {}".format(i, size))
             lemmas = chain.from_iterable([sent.lemma_.split() for sent in doc.sents])
-            processed_doc = self.ngramize(lemmas, ngram_range=ngram_range)
+            processed_doc = self.ngramize(lemmas, ngram_range=_ngram_range)
             yield from processed_doc
 
-    def ngramize(self, words: List[str], ngram_range=(1, 1)) -> Generator[List[str], Any, None]:
+    def ngramize(self, items: List[str], ngram_range=(1, 1)):
         """
-        :param words: list of tokens, lemmas or other strings to form ngrams
+        :param items: list of tokens, lemmas or other strings to form ngrams
         :param ngram_range: range for producing ngrams, ex. for unigrams + bigrams should be set to
         (1, 2), for bigrams only should be set to (2, 2)
-        :return: generator of ngrams as list of strings
+        :return:
         """
+        _ngram_range = self.ngram_range or ngram_range
+
         filtered = list(
-            filter(lambda x: x.isalpha() and x not in self.stopwords, words))
+            filter(lambda x: x.isalpha() and x not in self.stopwords, items))
 
         ngrams = []
-        ranges = [(0, i) for i in range(ngram_range[0], ngram_range[1] + 1)]
+        ranges = [(0, i) for i in range(_ngram_range[0], _ngram_range[1] + 1)]
         for r in ranges:
             ngrams += list(zip(*[filtered[j:] for j in range(*r)]))
 
@@ -99,15 +107,18 @@ class SpacyTokenizer:
 
         yield formatted_ngrams
 
+    def set_stopwords(self, stopwords):
+        self.stopwords = stopwords
+
 
 # Test
-# data = ['His paintings brought him both critical and commercial success,'
-#         ' which enabled. him to set up his own. professional portrait studio'
-#         ' in Chelsea, south-west London.', ' After the Great War finished, he met'
-#          ' and fell in love with Katherine Gardiner, she immediately became his muse and features'
-#          ' in many key work from the period. The couple married in 1921.']
-# tok = SpacyTokenizer()
-# items = tok.lemmatize(data)
-# print(*list(i for i in items))
-# items = tok.tokenize(data, lower=False)
-# print(*list(i for i in items))
+data = ['His paintings brought him both critical and commercial success,'
+        ' which enabled. him to set up his own. professional portrait studio'
+        ' in Chelsea, south-west London.', ' After the Great War finished, he met'
+         ' and fell in love with Katherine Gardiner, she immediately became his muse and features'
+         ' in many key work from the period. The couple married in 1921.']
+tok = SpacyTokenizer()
+items = tok.lemmatize(data)
+print(*list(i for i in items))
+items = tok.tokenize(data, ngram_range=(1, 2))
+print(*list(i for i in items))
