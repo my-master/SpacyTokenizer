@@ -36,7 +36,7 @@ class SpacyTokenizer:
         self.ngram_range = ngram_range
 
     def tokenize(self, data: List[str], ngram_range=(1, 1), batch_size=10000, n_threads=1,
-                 lower=True):
+                 lower=True) -> Generator[List[str], Any, None]:
         """
         Tokenize a list of documents.
         :param data: a list of documents to process
@@ -63,7 +63,8 @@ class SpacyTokenizer:
             processed_doc = self.ngramize(tokens, ngram_range=ngram_range)
             yield from processed_doc
 
-    def lemmatize(self, data: List[str], ngram_range=(1, 1), batch_size=10000, n_threads=1):
+    def lemmatize(self, data: List[str], ngram_range=(1, 1), batch_size=10000, n_threads=1) -> \
+            Generator[List[str], Any, None]:
         """
         Lemmatize a list of documents.
         :param data: a list of documents to process
@@ -86,7 +87,7 @@ class SpacyTokenizer:
             processed_doc = self.ngramize(lemmas, ngram_range=_ngram_range)
             yield from processed_doc
 
-    def ngramize(self, items: List[str], ngram_range=(1, 1)):
+    def ngramize(self, items: List[str], ngram_range=(1, 1)) -> Generator[List[str], Any, None]:
         """
         :param items: list of tokens, lemmas or other strings to form ngrams
         :param ngram_range: range for producing ngrams, ex. for unigrams + bigrams should be set to
@@ -109,16 +110,3 @@ class SpacyTokenizer:
 
     def set_stopwords(self, stopwords):
         self.stopwords = stopwords
-
-
-# Test
-data = ['His paintings brought him both critical and commercial success,'
-        ' which enabled. him to set up his own. professional portrait studio'
-        ' in Chelsea, south-west London.', ' After the Great War finished, he met'
-         ' and fell in love with Katherine Gardiner, she immediately became his muse and features'
-         ' in many key work from the period. The couple married in 1921.']
-tok = SpacyTokenizer()
-items = tok.lemmatize(data)
-print(*list(i for i in items))
-items = tok.tokenize(data, ngram_range=(1, 2))
-print(*list(i for i in items))
