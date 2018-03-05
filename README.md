@@ -33,3 +33,12 @@ output:
 ['oh', 'this', 'senseless', 'life', 'of', 'ours', 'oh this',
  'this senseless', 'senseless life', 'life of', 'of ours']
 ```
+
+## Tokenizers
+There are two types of tokenizers, `SpacyTokenizer` and `StreamSpacyTokenizer`.
+The latter uses spaCy's [Language.pipe()](https://spacy.io/api/language#pipe) object
+to allow multithreading. However, the performance of the multithreading class can be unexpected,
+parameter `n_threads` might be ingnored and result in too many threads with process overloading
+on your system. Until this is addressed, I recommend using `SpacyTokenizer` class, which is
+not streaming.
+
