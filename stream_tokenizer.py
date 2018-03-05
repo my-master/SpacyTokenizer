@@ -1,19 +1,13 @@
-import logging
 from itertools import chain
 from typing import List, Generator, Any
 
 import spacy
 from spacy.lang.en import English
 
-logger = logging.getLogger()
-logger.setLevel(logging.INFO)
-fmt = logging.Formatter('%(asctime)s: [ %(message)s ]', '%m/%d/%Y %I:%M:%S %p')
-console = logging.StreamHandler()
-console.setFormatter(fmt)
-logger.addHandler(console)
+from logger import logger
 
 
-class SpacyTokenizer:
+class StreamSpacyTokenizer:
     """
     Tokenize or lemmatize a list of documents.
     Return list of tokens or lemmas, without sentencizing.
