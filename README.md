@@ -41,6 +41,6 @@ output:
 ## Tokenizers
 There are two types of tokenizers, `SpacyTokenizer` and `StreamSpacyTokenizer`.
 The latter uses spaCy's [Language.pipe()](https://spacy.io/api/language#pipe) object
-to allow multithreading. However, the performance of the multithreading class can be unexpected
+to allow multi-threading. However, the performance of the multithreading class can be unexpected
 depending on you system, parameter `n_threads` might be ingnored and spaCy would
 take as much threads as your system has, which results in processor overloading.
